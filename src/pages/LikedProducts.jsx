@@ -46,19 +46,26 @@ const LikedProducts = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [sortOrder, setSortOrder] = useState('default');
   const [sortedProducts, setSortedProducts] = useState([]);
+  const [filterBy, setFilterBy] = useState('all'); // 'all', 'in-cart'
 
-  // Sort the liked products whenever they change or sort order changes
+  // Sort and filter the liked products whenever they change or sort/filter settings change
   useEffect(() => {
-    let sorted = [...likedProducts];
+    let filtered = [...likedProducts];
     
-    if (sortOrder === 'price-asc') {
-      sorted = sorted.sort((a, b) => a.price - b.price);
-    } else if (sortOrder === 'price-desc') {
-      sorted = sorted.sort((a, b) => b.price - a.price);
+    // Apply filtering
+    if (filterBy === 'in-cart') {
+      filtered = filtered.filter(product => getProductCartQuantity(product.id) > 0);
     }
     
-    setSortedProducts(sorted);
-  }, [likedProducts, sortOrder]);
+    // Apply sorting
+    if (sortOrder === 'price-asc') {
+      filtered = filtered.sort((a, b) => a.price - b.price);
+    } else if (sortOrder === 'price-desc') {
+      filtered = filtered.sort((a, b) => b.price - a.price);
+    }
+    
+    setSortedProducts(filtered);
+  }, [likedProducts, sortOrder, filterBy, getProductCartQuantity]);
 
   // Animate Add to Cart button
   const animateCartButton = (productId) => {
@@ -85,6 +92,11 @@ const LikedProducts = () => {
     setSortOrder(e.target.value);
   };
 
+  // Handle filter change
+  const handleFilterChange = (e) => {
+    setFilterBy(e.target.value);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header 
@@ -103,20 +115,34 @@ const LikedProducts = () => {
           </Link>
         </div>
 
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Liked Products</h1>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
+          <h1 className="text-3xl font-bold text-gray-900">Liked Products</h1>
           {likedProducts.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-gray-500">Sort by:</span>
-              <select 
-                className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={sortOrder}
-                onChange={handleSortChange}
-              >
-                <option value="default">Default</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-              </select>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-gray-700 font-medium">Filter by:</span>
+                <select 
+                  className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[120px]"
+                  value={filterBy}
+                  onChange={handleFilterChange}
+                >
+                  <option value="all">All Products</option>
+                  <option value="in-cart">In Cart</option>
+                </select>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-gray-700 font-medium">Sort by:</span>
+                <select 
+                  className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[120px]"
+                  value={sortOrder}
+                  onChange={handleSortChange}
+                >
+                  <option value="default">Default</option>
+                  <option value="price-asc">Price: Low to High</option>
+                  <option value="price-desc">Price: High to Low</option>
+                </select>
+              </div>
             </div>
           )}
         </div>
@@ -124,106 +150,136 @@ const LikedProducts = () => {
         <p className="text-gray-600 mb-8">
           {likedProducts.length === 0 ? 
             "You haven't liked any products yet. Explore our store and click the heart icon to save products you love!" : 
-            `You have ${likedProducts.length} liked product${likedProducts.length === 1 ? '' : 's'}.`}
+            `You have ${likedProducts.length} liked product${likedProducts.length === 1 ? '' : 's'}${
+              filterBy === 'in-cart' ? ` (showing ${sortedProducts.length} in cart)` : ''
+            }.`}
         </p>
         
         {likedProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {sortedProducts.map(product => {
-              const cartQuantity = getProductCartQuantity(product.id);
-              const isInCart = cartQuantity > 0;
-              const isAnimating = animatingCartButtons[product.id];
-              
-              return (
-                <div key={product.id} className="group">
-                  <div 
-                    className="bg-white overflow-hidden rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 cursor-pointer h-full flex flex-col relative"
-                  >
-                    <div className="absolute top-4 right-4 z-10">
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeFromLikedProducts(product.id);
-                        }}
-                        className="bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-sm hover:bg-red-50 transition-colors"
-                        aria-label="Remove from liked products"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
-
+          sortedProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {sortedProducts.map(product => {
+                const cartQuantity = getProductCartQuantity(product.id);
+                const isInCart = cartQuantity > 0;
+                const isAnimating = animatingCartButtons[product.id];
+                
+                return (
+                  <div key={product.id} className="group">
                     <div 
-                      className="h-40 bg-gray-100 relative overflow-hidden"
-                      onClick={() => handleProductClick(product)}
+                      className="bg-white overflow-hidden rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 cursor-pointer h-full flex flex-col relative"
                     >
-                      {product.image ? (
-                        <img 
-                          src={product.image} 
-                          alt={product.name} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+                      <div className="absolute top-4 right-4 z-10">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeFromLikedProducts(product.id);
                           }}
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full bg-gray-100 text-gray-400">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          className="bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-sm hover:bg-red-50 transition-colors"
+                          aria-label="Remove from liked products"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                           </svg>
-                        </div>
-                      )}
-                      
-                      {/* Cart badge if in cart */}
-                      {isInCart && (
-                        <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
-                          {cartQuantity}
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="p-4 flex flex-col flex-grow" onClick={() => handleProductClick(product)}>
-                      <h3 className="text-base font-semibold text-gray-900 line-clamp-1">{product.name}</h3>
-                      <div className="flex items-center mt-1">
-                        <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
-                          {product.category || 'Uncategorized'}
-                        </span>
+                        </button>
                       </div>
-                      <p className="mt-2 text-gray-600 text-xs line-clamp-2 flex-grow">{product.description}</p>
-                      <div className="mt-4 flex justify-between items-center">
-                        <span className="text-base font-bold text-blue-600">
-                          ${product.price ? product.price.toFixed(2) : '0.00'}
-                        </span>
-                        
-                        {isInCart ? (
-                          <div className="w-32" onClick={(e) => e.stopPropagation()}>
-                            <QuantityControl 
-                              quantity={cartQuantity} 
-                              onIncrease={() => updateCartQuantity(product.id, cartQuantity + 1)}
-                              onDecrease={() => updateCartQuantity(product.id, cartQuantity - 1)}
-                            />
-                          </div>
-                        ) : (
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAddToCart(product);
-                              animateCartButton(product.id);
+
+                      <div 
+                        className="h-40 bg-gray-100 relative overflow-hidden"
+                        onClick={() => handleProductClick(product)}
+                      >
+                        {product.image ? (
+                          <img 
+                            src={product.image} 
+                            alt={product.name} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
                             }}
-                            className={`bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-full text-sm font-medium transition-all ${isAnimating ? 'scale-95' : ''}`}
-                          >
-                            Add to Cart
-                          </button>
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full bg-gray-100 text-gray-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
                         )}
+                        
+                        {/* Cart badge if in cart */}
+                        {isInCart && (
+                          <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                            {cartQuantity}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="p-4 flex flex-col flex-grow" onClick={() => handleProductClick(product)}>
+                        <h3 className="text-base font-semibold text-gray-900 line-clamp-1">{product.name}</h3>
+                        <div className="flex items-center mt-1">
+                          <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                            {product.category || 'Uncategorized'}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-gray-600 text-xs line-clamp-2 flex-grow">{product.description}</p>
+                        <div className="mt-4 flex justify-between items-center">
+                          <span className="text-base font-bold text-blue-600">
+                            ${product.price ? product.price.toFixed(2) : '0.00'}
+                          </span>
+                          
+                          {isInCart ? (
+                            <div className="w-32" onClick={(e) => e.stopPropagation()}>
+                              <QuantityControl 
+                                quantity={cartQuantity} 
+                                onIncrease={() => updateCartQuantity(product.id, cartQuantity + 1)}
+                                onDecrease={() => updateCartQuantity(product.id, cartQuantity - 1)}
+                              />
+                            </div>
+                          ) : (
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAddToCart(product);
+                                animateCartButton(product.id);
+                              }}
+                              className={`bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-full text-sm font-medium transition-all ${isAnimating ? 'scale-95' : ''}`}
+                            >
+                              Add to Cart
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-8 text-center">
+              <div className="inline-block p-6 rounded-full bg-blue-100 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-medium text-gray-800 mb-2">No products in cart</h2>
+              <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                {filterBy === 'in-cart' ? 'None of your liked products are in your cart yet.' : ''}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  onClick={() => setFilterBy('all')}
+                  className="inline-flex items-center justify-center px-5 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors"
+                >
+                  Show All Liked Products
+                </button>
+                <Link 
+                  to="/" 
+                  className="inline-flex items-center justify-center px-5 py-3 bg-gray-200 text-gray-800 font-medium rounded-xl hover:bg-gray-300 transition-colors"
+                >
+                  Continue Shopping
+                </Link>
+              </div>
+            </div>
+          )
         ) : (
           <div className="mt-8 text-center">
             <div className="inline-block p-6 rounded-full bg-gray-100 mb-4">

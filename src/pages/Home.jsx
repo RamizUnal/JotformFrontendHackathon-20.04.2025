@@ -120,6 +120,7 @@ const Home = () => {
   const [successOrderDetails, setSuccessOrderDetails] = useState({ orderId: '', total: 0 });
   const { isProductLiked, toggleLikedProduct, likedProducts } = useLikedProducts();
   const [sortOrder, setSortOrder] = useState('default');
+  const [filterBy, setFilterBy] = useState('all'); // 'all', 'liked', 'in-cart'
 
   // Define fetchProducts outside useEffect so it can be reused
   const fetchProducts = async () => {
@@ -178,6 +179,13 @@ const Home = () => {
         results = results.filter(product => product.category === activeCategory);
       }
       
+      // Apply filter for liked/cart products
+      if (filterBy === 'liked') {
+        results = results.filter(product => isProductLiked(product.id));
+      } else if (filterBy === 'in-cart') {
+        results = results.filter(product => getProductCartQuantity(product.id) > 0);
+      }
+      
       // Apply sorting
       if (sortOrder === 'price-asc') {
         results = [...results].sort((a, b) => a.price - b.price);
@@ -189,7 +197,7 @@ const Home = () => {
     } else {
       setFilteredProducts([]);
     }
-  }, [products, activeCategory, searchTerm, sortOrder]);
+  }, [products, activeCategory, searchTerm, sortOrder, filterBy, isProductLiked, getProductCartQuantity]);
 
   // Save cart items to localStorage whenever they change
   useEffect(() => {
@@ -354,9 +362,16 @@ const Home = () => {
     setIsCategoryOpen(!isCategoryOpen);
   };
 
-  // Add function to handle sort change
+  // Handle sort change
   const handleSortChange = (e) => {
     setSortOrder(e.target.value);
+  };
+
+  // Add function to handle filter change
+  const handleFilterChange = (e) => {
+    setFilterBy(e.target.value);
+    // Reset to first page when filter changes
+    setCurrentPage(1);
   };
 
   return (
@@ -486,21 +501,36 @@ const Home = () => {
           
           {/* Main Content */}
           <div className="w-full">
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
               <h2 className="text-2xl font-bold text-gray-900">
                 {searchTerm ? `Search Results: "${searchTerm}"` : 'Featured Products'}
               </h2>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500">Sort by:</span>
-                <select 
-                  className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={sortOrder}
-                  onChange={handleSortChange}
-                >
-                  <option value="default">Default</option>
-                  <option value="price-asc">Price: Low to High</option>
-                  <option value="price-desc">Price: High to Low</option>
-                </select>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-700 font-medium">Filter by:</span>
+                  <select 
+                    className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[120px]"
+                    value={filterBy}
+                    onChange={handleFilterChange}
+                  >
+                    <option value="all">All Products</option>
+                    <option value="liked">Liked Products</option>
+                    <option value="in-cart">In Cart</option>
+                  </select>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-700 font-medium">Sort by:</span>
+                  <select 
+                    className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[120px]"
+                    value={sortOrder}
+                    onChange={handleSortChange}
+                  >
+                    <option value="default">Default</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                  </select>
+                </div>
               </div>
             </div>
             
@@ -527,14 +557,32 @@ const Home = () => {
             ) : filteredProducts.length === 0 ? (
               <div className="bg-white/70 backdrop-blur-sm border border-blue-100 rounded-2xl p-8 text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-500 mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
+                  {filterBy === 'liked' ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  ) : filterBy === 'in-cart' ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  )}
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">No matching products found</h3>
-                <p className="text-gray-600 mb-6">Try adjusting your search or category filters.</p>
-                <button onClick={() => { setSearchTerm(''); setActiveCategory('All'); }} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-medium">
-                  Clear Filters
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {filterBy === 'liked' ? "No liked products found" : 
+                   filterBy === 'in-cart' ? "No products in cart" : 
+                   "No matching products found"}
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  {filterBy === 'liked' ? "You haven't liked any products yet. Click the heart icon on products you love!" : 
+                   filterBy === 'in-cart' ? "Your cart is empty. Add some products to your cart!" : 
+                   "Try adjusting your search or category filters."}
+                </p>
+                <button onClick={() => { setFilterBy('all'); setSearchTerm(''); setActiveCategory('All'); }} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-medium">
+                  Show All Products
                 </button>
               </div>
             ) : (
