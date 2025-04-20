@@ -30,6 +30,8 @@ THIS IS HOW IT'S IMPLEMENTED, NOT AN ERROR. TECHNICALLY THESE ARE DIFFERENT PROD
 
 Submission works, shows the correct sum and sends the correct time
 
+ADDED OPTIMIZED IMAGES FOR FASTER LOAD TIME
+
 ## Getting Started
 To start, go to the project folder and simply type "npm run dev" in the terminal
 You can change the store type by gping to jotformApi.js and changing 

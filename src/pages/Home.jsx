@@ -122,6 +122,7 @@ const Home = () => {
   const { isProductLiked, toggleLikedProduct, likedProducts } = useLikedProducts();
   const [sortOrder, setSortOrder] = useState('default');
   const [filterBy, setFilterBy] = useState('all'); // 'all', 'liked', 'in-cart'
+  const [isDebugExpanded, setIsDebugExpanded] = useState(false);
 
   // Define fetchProducts outside useEffect so it can be reused
   const fetchProducts = async () => {
@@ -375,6 +376,11 @@ const Home = () => {
     setCurrentPage(1);
   };
 
+  // Toggle debug info expansion
+  const toggleDebugInfo = () => {
+    setIsDebugExpanded(!isDebugExpanded);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <Header
@@ -392,17 +398,41 @@ const Home = () => {
       />
       
       <main className="max-w-7xl mx-auto px-6 py-12">
-        {/* Debug Information */}
-        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
-          <h3 className="text-lg font-semibold text-yellow-800">Debug Info</h3>
-          <p className="text-sm text-yellow-700">
-            Current Store ID: {CURRENT_STORE_ID}<br/>
-            Store Name: {storeName}<br/>
-            Categories Found: {categories.join(', ')}<br/>
-            Product Count: {products.length}<br/>
-            Search Term: {searchTerm ? `"${searchTerm}"` : 'None'}<br/>
-            Filtered Products: {filteredProducts.length}
-          </p>
+        {/* Debug Information - Now Collapsible */}
+        <div 
+          className={`mb-6 bg-yellow-50 border border-yellow-200 rounded-xl overflow-hidden transition-all duration-300 ${isDebugExpanded ? 'p-4' : 'py-2 px-4'} cursor-pointer`}
+          onClick={toggleDebugInfo}
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-yellow-800 flex items-center">
+              Debug Info
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className={`h-5 w-5 ml-2 transition-transform duration-200 ${isDebugExpanded ? 'rotate-180' : ''}`} 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </h3>
+            {!isDebugExpanded && (
+              <span className="text-xs text-yellow-700">
+                {products.length} products, {filteredProducts.length} filtered
+              </span>
+            )}
+          </div>
+          
+          {isDebugExpanded && (
+            <p className="text-sm text-yellow-700 mt-2">
+              Current Store ID: {CURRENT_STORE_ID}<br/>
+              Store Name: {storeName}<br/>
+              Categories Found: {categories.join(', ')}<br/>
+              Product Count: {products.length}<br/>
+              Search Term: {searchTerm ? `"${searchTerm}"` : 'None'}<br/>
+              Filtered Products: {filteredProducts.length}
+            </p>
+          )}
         </div>
         
         {/* Main Content with Categories as floating element */}
