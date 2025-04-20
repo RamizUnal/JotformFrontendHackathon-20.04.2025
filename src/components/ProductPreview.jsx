@@ -5,7 +5,114 @@ import { useLikedProducts } from '../contexts/LikedProductsContext';
 
 const ProductPreview = ({ product, isOpen, onClose, onAddToCart, getCartQuantity, onUpdateQuantity }) => {
   const [isAnimating, setIsAnimating] = useState(false);
+  const [connectedProductsData, setConnectedProductsData] = useState([]);
   const { isProductLiked, toggleLikedProduct } = useLikedProducts();
+  
+  // Clear connected products when modal closes or opens
+  useEffect(() => {
+    if (!isOpen) {
+      setConnectedProductsData([]);
+    }
+  }, [isOpen]);
+  
+  // Fetch connected products data when the product changes
+  useEffect(() => {
+    const fetchConnectedProducts = async () => {
+      if (!product) return;
+      
+      // Log product and connected products data for debugging
+      console.log('Current product:', product.id, product.name);
+      console.log('Full product object:', product);
+      console.log('Connected products IDs:', product.connectedProducts);
+      
+      // Check if connected products exist and is an array with items
+      if (!product.connectedProducts || 
+          !Array.isArray(product.connectedProducts) || 
+          product.connectedProducts.length === 0) {
+        console.log('No valid connected products found');
+        setConnectedProductsData([]);
+        return;
+      }
+
+      try {
+        // Import required functions from API
+        const { getStoreProducts, getProductById } = await import('../api/jotformApi');
+        
+        // Get all products from the store
+        const allProducts = await getStoreProducts();
+        console.log('All products fetched, count:', allProducts.length);
+        console.log('First few products:', allProducts.slice(0, 3));
+        
+        // Create a map of product IDs for faster lookup
+        const productMap = {};
+        allProducts.forEach(p => {
+          // Store product with both string and number keys to handle any ID format
+          productMap[p.id] = p;
+          productMap[String(p.id)] = p;
+          
+          // Also store by key if available
+          if (p.key) {
+            productMap[p.key] = p;
+            productMap[String(p.key)] = p;
+          }
+        });
+        
+        // Find each connected product directly
+        const relatedProducts = [];
+        
+        // Track missing product IDs to create placeholders
+        const missingProductIds = [];
+        
+        // Process each connected product ID
+        for (const connectedId of product.connectedProducts) {
+          const connectedIdStr = String(connectedId);
+          
+          console.log(`Looking for connected product ID: ${connectedIdStr}`);
+          
+          // Try to find the product by ID in the map
+          let relatedProduct = productMap[connectedIdStr] || productMap[connectedId];
+          
+          // If not found in the map, try to fetch it directly
+          if (!relatedProduct) {
+            console.log(`Product ID ${connectedIdStr} not found in map, trying direct fetch...`);
+            relatedProduct = await getProductById(connectedIdStr);
+          }
+          
+          if (relatedProduct) {
+            console.log('Found related product:', relatedProduct.id, relatedProduct.name);
+            relatedProducts.push(relatedProduct);
+          } else {
+            console.warn('Connected product not found:', connectedIdStr);
+            missingProductIds.push(connectedIdStr);
+          }
+        }
+        
+        console.log(`Found ${relatedProducts.length} connected products, missing ${missingProductIds.length}`);
+        
+        // Add placeholder objects for missing products
+        // This ensures we at least show something for the missing products
+        missingProductIds.forEach(id => {
+          relatedProducts.push({
+            id: id,
+            name: `Product #${id}`,
+            price: 0,
+            description: "Product information unavailable",
+            image: "",
+            isMissingProduct: true  // Flag to identify placeholder products
+          });
+        });
+        
+        setConnectedProductsData(relatedProducts);
+      } catch (error) {
+        console.error('Error fetching connected products:', error);
+        setConnectedProductsData([]);
+      }
+    };
+
+    if (isOpen) {
+      fetchConnectedProducts();
+    }
+  }, [product, isOpen]);
   
   if (!product) return null;
   
@@ -142,6 +249,98 @@ const ProductPreview = ({ product, isOpen, onClose, onAddToCart, getCartQuantity
                   </button>
                 )}
               </div>
+              
+              {/* Connected Products Section */}
+              {connectedProductsData.length > 0 && (
+                <div className="mt-8 pt-6 border-t border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">You might also like:</h3>
+                  <div className="flex overflow-x-auto gap-4 pb-2">
+                    {connectedProductsData.map(relatedProduct => {
+                      const relatedCartQuantity = getCartQuantity ? getCartQuantity(relatedProduct.id) : 0;
+                      const isRelatedInCart = relatedCartQuantity > 0;
+                      const isMissing = relatedProduct.isMissingProduct;
+                      
+                      return (
+                        <div key={relatedProduct.id} className="flex-shrink-0 w-32">
+                          <div className={`bg-white rounded-lg shadow-sm border ${isMissing ? 'border-dashed border-gray-300' : 'border-gray-200'} overflow-hidden`}>
+                            <div className="h-24 bg-gray-100 relative">
+                              {relatedProduct.image ? (
+                                <img 
+                                  src={relatedProduct.image} 
+                                  alt={relatedProduct.name}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = 'https://via.placeholder.com/100x100?text=No+Image';
+                                  }}
+                                />
+                              ) : (
+                                <div className="flex items-center justify-center h-full w-full bg-gray-100">
+                                  {isMissing ? (
+                                    <div className="text-center p-1">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                      </svg>
+                                    </div>
+                                  ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                  )}
+                                </div>
+                              )}
+                              
+                              {isRelatedInCart && !isMissing && (
+                                <div className="absolute top-1 right-1 bg-blue-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                  {relatedCartQuantity}
+                                </div>
+                              )}
+                            </div>
+                            <div className="p-2">
+                              <p className="text-xs font-medium text-gray-900 line-clamp-1">{relatedProduct.name}</p>
+                              {!isMissing ? (
+                                <p className="text-xs font-bold text-blue-600 mt-1">${relatedProduct.price.toFixed(2)}</p>
+                              ) : (
+                                <p className="text-xs italic text-gray-500 mt-1">Product unavailable</p>
+                              )}
+                              
+                              {!isMissing && (isRelatedInCart ? (
+                                <div className="mt-2 flex items-center justify-between bg-gray-50 rounded-md border border-gray-200 overflow-hidden">
+                                  <button 
+                                    onClick={() => onUpdateQuantity(relatedProduct.id, relatedCartQuantity - 1)}
+                                    className="px-1 py-1"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                  </button>
+                                  <span className="text-xs font-medium">{relatedCartQuantity}</span>
+                                  <button 
+                                    onClick={() => onUpdateQuantity(relatedProduct.id, relatedCartQuantity + 1)}
+                                    className="px-1 py-1"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              ) : (
+                                <button 
+                                  onClick={() => onAddToCart(relatedProduct)}
+                                  className="mt-2 w-full py-1 text-xs font-medium bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors"
+                                  disabled={isMissing}
+                                >
+                                  {isMissing ? "Unavailable" : "Add"}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </DialogPanel>
         </div>

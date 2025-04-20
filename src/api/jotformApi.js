@@ -130,6 +130,26 @@ const extractImage = (productItem) => {
   return '';
 };
 
+// Extract connected products with better error handling
+const parseConnectedProducts = (connectedProductsStr) => {
+  if (!connectedProductsStr) return [];
+  
+  try {
+    // Handle both string and already parsed array
+    if (typeof connectedProductsStr === 'string') {
+      const parsed = JSON.parse(connectedProductsStr);
+      console.log('Parsed connected products:', parsed);
+      return Array.isArray(parsed) ? parsed : [];
+    } else if (Array.isArray(connectedProductsStr)) {
+      return connectedProductsStr;
+    }
+  } catch (error) {
+    console.error('Error parsing connected products:', error, connectedProductsStr);
+  }
+  
+  return [];
+};
+
 //da main function dat gets all products from current store
 export const getStoreProducts = async () => {
   try {
@@ -170,14 +190,19 @@ export const getStoreProducts = async () => {
         const products = Object.keys(productData).map(key => {
           const item = productData[key];
           
+          // Use pid as ID if available, otherwise fallback to key
+          const productId = item.pid || key;
+          
           return {
-            id: key,
+            id: productId,
+            key: key, // Keep original key for reference
             name: item.name || 'Cool Product',
             price: extractPrice(item),
             description: item.description || '',
             image: extractImage(item),
             category: extractCategory(item, categoryMap),
-            storeName: storeName
+            storeName: storeName,
+            connectedProducts: parseConnectedProducts(item.connectedProducts)
           };
         });
         
@@ -344,5 +369,30 @@ export const submitOrder = async (cartItems, customerInfo) => {
       success: false,
       message: error.message || 'An error occurred while processing your order'
     };
+  }
+};
+
+// Add a function to get a specific product by ID
+export const getProductById = async (productId) => {
+  if (!productId) return null;
+  
+  try {
+    // Get all products first
+    const allProducts = await getStoreProducts();
+    
+    // Convert product ID to string for consistent comparison
+    const targetId = String(productId);
+    
+    // Find the product with matching ID
+    // Check both the mapped id and the original key
+    const product = allProducts.find(p => 
+      String(p.id) === targetId || String(p.key) === targetId
+    );
+    
+    console.log(`Looking for product ID ${targetId}, found:`, product);
+    return product || null;
+  } catch (error) {
+    console.error(`Error fetching product ID ${productId}:`, error);
+    return null;
   }
 }; 

@@ -6,7 +6,7 @@ Please fill in your information after forking this repository:
 - **Name**: [Ramiz Arda Ünal]
 
 ## Project Description
-This is a basic e commerce website implementation that gets its data from the API provided.
+This is a basic e-commerce website implementation that gets its data from the API provided.
 
 Some core implementations:
 
@@ -19,12 +19,14 @@ Basic notifications.
 Cart items that do not dissappear during a reload.
 Liked items, that respond to if a liked item is present in the cart or not, if so the user can still increment/decrement.
 Basic product information implementation that does not send to a new page, works well with items already present in the cart.
+Clicking on a product will give more information about that product in a card.
+
 
 Category implementation that works well with the page's layout, the user can choose from a variety of categories
 
 ## Getting Started
 To start, go to the project folder and simply type "npm run dev" in the terminal
-[Add instructions for setting up and running the project]
+
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
