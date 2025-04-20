@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import Cart from '../components/Cart';
@@ -44,6 +44,21 @@ const LikedProducts = () => {
   const [isProductPreviewOpen, setIsProductPreviewOpen] = useState(false);
   const [animatingCartButtons, setAnimatingCartButtons] = useState({});
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [sortOrder, setSortOrder] = useState('default');
+  const [sortedProducts, setSortedProducts] = useState([]);
+
+  // Sort the liked products whenever they change or sort order changes
+  useEffect(() => {
+    let sorted = [...likedProducts];
+    
+    if (sortOrder === 'price-asc') {
+      sorted = sorted.sort((a, b) => a.price - b.price);
+    } else if (sortOrder === 'price-desc') {
+      sorted = sorted.sort((a, b) => b.price - a.price);
+    }
+    
+    setSortedProducts(sorted);
+  }, [likedProducts, sortOrder]);
 
   // Animate Add to Cart button
   const animateCartButton = (productId) => {
@@ -65,6 +80,11 @@ const LikedProducts = () => {
     addToCart(product);
   };
 
+  // Handle sort change
+  const handleSortChange = (e) => {
+    setSortOrder(e.target.value);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header 
@@ -83,7 +103,24 @@ const LikedProducts = () => {
           </Link>
         </div>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Liked Products</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Liked Products</h1>
+          {likedProducts.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500">Sort by:</span>
+              <select 
+                className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={sortOrder}
+                onChange={handleSortChange}
+              >
+                <option value="default">Default</option>
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+              </select>
+            </div>
+          )}
+        </div>
+        
         <p className="text-gray-600 mb-8">
           {likedProducts.length === 0 ? 
             "You haven't liked any products yet. Explore our store and click the heart icon to save products you love!" : 
@@ -92,7 +129,7 @@ const LikedProducts = () => {
         
         {likedProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {likedProducts.map(product => {
+            {sortedProducts.map(product => {
               const cartQuantity = getProductCartQuantity(product.id);
               const isInCart = cartQuantity > 0;
               const isAnimating = animatingCartButtons[product.id];

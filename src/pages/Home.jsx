@@ -119,6 +119,7 @@ const Home = () => {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successOrderDetails, setSuccessOrderDetails] = useState({ orderId: '', total: 0 });
   const { isProductLiked, toggleLikedProduct, likedProducts } = useLikedProducts();
+  const [sortOrder, setSortOrder] = useState('default');
 
   // Define fetchProducts outside useEffect so it can be reused
   const fetchProducts = async () => {
@@ -177,11 +178,18 @@ const Home = () => {
         results = results.filter(product => product.category === activeCategory);
       }
       
+      // Apply sorting
+      if (sortOrder === 'price-asc') {
+        results = [...results].sort((a, b) => a.price - b.price);
+      } else if (sortOrder === 'price-desc') {
+        results = [...results].sort((a, b) => b.price - a.price);
+      }
+      
       setFilteredProducts(results);
     } else {
       setFilteredProducts([]);
     }
-  }, [products, activeCategory, searchTerm]);
+  }, [products, activeCategory, searchTerm, sortOrder]);
 
   // Save cart items to localStorage whenever they change
   useEffect(() => {
@@ -346,6 +354,11 @@ const Home = () => {
     setIsCategoryOpen(!isCategoryOpen);
   };
 
+  // Add function to handle sort change
+  const handleSortChange = (e) => {
+    setSortOrder(e.target.value);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <Header
@@ -479,11 +492,14 @@ const Home = () => {
               </h2>
               <div className="flex items-center gap-2">
                 <span className="text-gray-500">Sort by:</span>
-                <select className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option>Price: Low to High</option>
-                  <option>Price: High to Low</option>
-                  <option>Newest</option>
-                  <option>Popular</option>
+                <select 
+                  className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={sortOrder}
+                  onChange={handleSortChange}
+                >
+                  <option value="default">Default</option>
+                  <option value="price-asc">Price: Low to High</option>
+                  <option value="price-desc">Price: High to Low</option>
                 </select>
               </div>
             </div>

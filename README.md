@@ -18,7 +18,9 @@ If an item is already on the cart the user can choose to increment / decrement t
 Basic notifications.
 Cart items that do not dissappear during a reload.
 Liked items, that respond to if a liked item is present in the cart or not, if so the user can still increment/decrement.
+Basic product information implementation that does not send to a new page, works well with items already present in the cart.
 
+Category implementation that works well with the page's layout, the user can choose from a variety of categories
 
 ## Getting Started
 To start, go to the project folder and simply type "npm run dev" in the terminal
