@@ -6,6 +6,31 @@ import { useLikedProducts } from '../contexts/LikedProductsContext';
 import { useCart } from '../contexts/CartContext';
 import ProductPreview from '../components/ProductPreview';
 
+// Quantity Control Component
+const QuantityControl = ({ quantity, onIncrease, onDecrease }) => {
+  return (
+    <div className="flex items-center justify-between w-full bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
+      <button 
+        onClick={onDecrease}
+        className="px-3 py-2 text-gray-700 hover:bg-gray-200 transition-colors focus:outline-none"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+        </svg>
+      </button>
+      <span className="font-medium text-sm">{quantity}</span>
+      <button 
+        onClick={onIncrease}
+        className="px-3 py-2 text-gray-700 hover:bg-gray-200 transition-colors focus:outline-none"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+        </svg>
+      </button>
+    </div>
+  );
+};
+
 const LikedProducts = () => {
   const { likedProducts, removeFromLikedProducts } = useLikedProducts();
   const { 
@@ -134,16 +159,27 @@ const LikedProducts = () => {
                         <span className="text-base font-bold text-blue-600">
                           ${product.price ? product.price.toFixed(2) : '0.00'}
                         </span>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddToCart(product);
-                            animateCartButton(product.id);
-                          }}
-                          className={`bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-full text-sm font-medium transition-all ${isAnimating ? 'scale-95' : ''}`}
-                        >
-                          {isInCart ? 'Add More' : 'Add to Cart'}
-                        </button>
+                        
+                        {isInCart ? (
+                          <div className="w-32" onClick={(e) => e.stopPropagation()}>
+                            <QuantityControl 
+                              quantity={cartQuantity} 
+                              onIncrease={() => updateCartQuantity(product.id, cartQuantity + 1)}
+                              onDecrease={() => updateCartQuantity(product.id, cartQuantity - 1)}
+                            />
+                          </div>
+                        ) : (
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddToCart(product);
+                              animateCartButton(product.id);
+                            }}
+                            className={`bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-full text-sm font-medium transition-all ${isAnimating ? 'scale-95' : ''}`}
+                          >
+                            Add to Cart
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

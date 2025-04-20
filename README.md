@@ -6,9 +6,22 @@ Please fill in your information after forking this repository:
 - **Name**: [Ramiz Arda Ünal]
 
 ## Project Description
-[Add a brief description of your project here]
+This is a basic e commerce website implementation that gets its data from the API provided.
+
+Some core implementations:
+
+Showing all products in a nice, organised format.
+Having a pagination control that matches the system's UI
+Search function that works on different pages that can search based on product name / description
+Add to cart buttons that response differently if the item is already present on the card or not.
+If an item is already on the cart the user can choose to increment / decrement the amount.
+Basic notifications.
+Cart items that do not dissappear during a reload.
+Liked items, that respond to if a liked item is present in the cart or not, if so the user can still increment/decrement.
+
 
 ## Getting Started
+To start, go to the project folder and simply type "npm run dev" in the terminal
 [Add instructions for setting up and running the project]
 
 ## License
