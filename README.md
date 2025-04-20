@@ -21,11 +21,18 @@ Liked items, that respond to if a liked item is present in the cart or not, if s
 Basic product information implementation that does not send to a new page, works well with items already present in the cart.
 Clicking on a product will give more information about that product in a card.
 
-
 Category implementation that works well with the page's layout, the user can choose from a variety of categories
+
+In product information, any product also lists other products that are related. The user can add these to the card from here as well.
+
+IMPORTANT: DUE TO HOW THE PRODUCTS ARE CODED, ANY RELATED PRODUCT TO ONE PRODUCT WILL HAVE THE SAME NAME, BUT DIFFERENT ID'S
+THIS IS HOW IT'S IMPLEMENTED, NOT AN ERROR. TECHNICALLY THESE ARE DIFFERENT PRODUCTS WITH DIFFERENT ID'S
 
 ## Getting Started
 To start, go to the project folder and simply type "npm run dev" in the terminal
+You can change the store type by gping to jotformApi.js and changing 
+    const CURRENT_STORE_ID = FORM_IDS.store3;
+to store2 or 1. Best works in store3. It will also yield an error if your try any number other than 1 2 3 so its modular, more stores can be added.
 
 
 ## License
