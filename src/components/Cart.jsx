@@ -181,7 +181,7 @@ const Cart = ({
                                       onClick={() => handleRemove(item.id)}
                                       className="font-medium text-blue-600 hover:text-blue-500"
                                     >
-                                      Remove
+                                      Remove All
                                     </button>
                                   </div>
                                 </div>

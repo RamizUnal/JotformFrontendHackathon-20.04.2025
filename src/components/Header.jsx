@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 
-const Header = ({ cartItemsCount = 0, onCartClick, onSearch }) => {
+const Header = ({ cartItemsCount = 0, onCartClick, onSearch, likedProductsCount = 0 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedTerm, setDebouncedTerm] = useState('');
 
@@ -48,9 +49,9 @@ const Header = ({ cartItemsCount = 0, onCartClick, onSearch }) => {
     <header className="bg-white shadow-sm py-4 sticky top-0 z-40">
       <div className="container mx-auto px-4 flex justify-between items-center">
         {/* Logo */}
-        <h1 className="text-xl font-bold text-blue-600">
+        <Link to="/" className="text-xl font-bold text-blue-600 hover:text-blue-700 transition-colors">
           Jotform Store
-        </h1>
+        </Link>
 
         {/* Search Form */}
         <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md mx-4">
@@ -76,21 +77,40 @@ const Header = ({ cartItemsCount = 0, onCartClick, onSearch }) => {
           </div>
         </form>
 
-        {/* Cart Button */}
-        <button
-          onClick={onCartClick}
-          className="relative flex items-center p-2 text-gray-700 hover:text-blue-600 transition-colors"
-          aria-label="Shopping Cart"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-          </svg>
-          {cartItemsCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-              {cartItemsCount}
-            </span>
-          )}
-        </button>
+        {/* Action Buttons */}
+        <div className="flex items-center gap-4">
+          {/* Liked Products Button */}
+          <Link 
+            to="/liked-products"
+            className="relative flex items-center p-2 text-gray-700 hover:text-rose-500 transition-colors"
+            aria-label="Liked Products"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+            {likedProductsCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                {likedProductsCount}
+              </span>
+            )}
+          </Link>
+
+          {/* Cart Button */}
+          <button
+            onClick={onCartClick}
+            className="relative flex items-center p-2 text-gray-700 hover:text-blue-600 transition-colors"
+            aria-label="Shopping Cart"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            {cartItemsCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                {cartItemsCount}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
     </header>
   );

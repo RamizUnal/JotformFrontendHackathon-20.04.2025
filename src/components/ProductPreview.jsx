@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { useLikedProducts } from '../contexts/LikedProductsContext';
 
 const ProductPreview = ({ product, isOpen, onClose, onAddToCart, getCartQuantity, onUpdateQuantity }) => {
   const [isAnimating, setIsAnimating] = useState(false);
+  const { isProductLiked, toggleLikedProduct } = useLikedProducts();
   
   if (!product) return null;
   
   const cartQuantity = getCartQuantity ? getCartQuantity(product.id) : 0;
   const isInCart = cartQuantity > 0;
+  const productIsLiked = isProductLiked(product.id);
   
   const handleAddToCart = () => {
     setIsAnimating(true);
@@ -23,22 +26,23 @@ const ProductPreview = ({ product, isOpen, onClose, onAddToCart, getCartQuantity
         className="fixed inset-0 bg-gray-500/75 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
       />
 
-      <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
-        <div className="flex min-h-full items-stretch justify-center text-center md:items-center md:px-2 lg:px-4">
+      <div className="fixed inset-0 z-30 w-screen overflow-y-auto">
+        <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
           <DialogPanel
             transition
-            className="flex w-full transform text-left text-base transition data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in md:my-8 md:max-w-2xl md:px-4 data-closed:md:translate-y-0 data-closed:md:scale-95 lg:max-w-4xl"
+            className="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl data-closed:opacity-0 data-closed:scale-95 data-enter:ease-out data-enter:duration-300 data-leave:ease-in data-leave:duration-200"
           >
-            <div className="relative flex w-full flex-col items-center overflow-hidden bg-white px-4 pt-14 pb-8 shadow-2xl sm:px-6 sm:pt-8 md:p-6 lg:p-8">
+            <div className="absolute right-0 top-0 pr-4 pt-4 sm:block">
               <button
                 type="button"
+                className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 onClick={onClose}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-500 sm:top-8 sm:right-6 md:top-6 md:right-6 lg:top-8 lg:right-8"
               >
                 <span className="sr-only">Close</span>
-                <XMarkIcon aria-hidden="true" className="h-6 w-6" />
+                <XMarkIcon className="h-6 w-6" aria-hidden="true" />
               </button>
-
+            </div>
+            <div className="bg-white p-6 sm:p-8">
               <div className="grid w-full grid-cols-1 items-start gap-x-6 gap-y-8 sm:grid-cols-12 lg:gap-x-8">
                 <div className="aspect-2/3 w-full sm:col-span-4 lg:col-span-5">
                   {product.image ? (
@@ -59,7 +63,18 @@ const ProductPreview = ({ product, isOpen, onClose, onAddToCart, getCartQuantity
                 </div>
                 
                 <div className="sm:col-span-8 lg:col-span-7">
-                  <h2 className="text-2xl font-bold text-gray-900 sm:pr-12">{product.name}</h2>
+                  <div className="flex justify-between items-start">
+                    <h2 className="text-2xl font-bold text-gray-900 sm:pr-12">{product.name}</h2>
+                    <button 
+                      onClick={() => toggleLikedProduct(product)}
+                      className={`transition-all duration-300 p-2 rounded-full ${productIsLiked ? 'bg-rose-50 text-rose-500' : 'text-gray-400 hover:text-rose-500 hover:bg-rose-50'}`}
+                      aria-label={productIsLiked ? "Remove from favorites" : "Add to favorites"}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill={productIsLiked ? "currentColor" : "none"} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                    </button>
+                  </div>
 
                   <section aria-labelledby="information-heading" className="mt-2">
                     <h3 id="information-heading" className="sr-only">

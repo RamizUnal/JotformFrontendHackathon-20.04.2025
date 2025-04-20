@@ -5,6 +5,8 @@ import ProductPreview from '../components/ProductPreview.jsx';
 import CheckoutModal from '../components/CheckoutModal.jsx';
 import OrderSuccessModal from '../components/OrderSuccessModal.jsx';
 import { getStoreProducts, CURRENT_STORE_ID, searchProducts, submitOrder } from '../api/jotformApi.js';
+import { useLikedProducts } from '../contexts/LikedProductsContext';
+import { useCart } from '../contexts/CartContext';
 
 // Toast notification component
 const Toast = ({ message, isVisible, onClose }) => {
@@ -91,16 +93,13 @@ const sampleProducts = [
 const Home = () => {
   const [products, setProducts] = useState(sampleProducts);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [cartItems, setCartItems] = useState(() => {
-    // Initialize cart from localStorage if available
-    try {
-      const savedCart = localStorage.getItem('cartItems');
-      return savedCart ? JSON.parse(savedCart) : [];
-    } catch (error) {
-      console.error('Error loading cart from localStorage:', error);
-      return [];
-    }
-  });
+  const { 
+    cartItems, 
+    addToCart: addToCartContext, 
+    updateCartQuantity, 
+    removeFromCart,
+    getProductCartQuantity 
+  } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -119,6 +118,7 @@ const Home = () => {
   const [orderStatus, setOrderStatus] = useState({ submitting: false, success: null, message: '' });
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successOrderDetails, setSuccessOrderDetails] = useState({ orderId: '', total: 0 });
+  const { isProductLiked, toggleLikedProduct, likedProducts } = useLikedProducts();
 
   // Define fetchProducts outside useEffect so it can be reused
   const fetchProducts = async () => {
@@ -224,12 +224,6 @@ const Home = () => {
     setNotification(prev => ({ ...prev, visible: false }));
   };
 
-  // Check if a product is in cart
-  const getProductCartQuantity = (productId) => {
-    const item = cartItems.find(item => item.id === productId);
-    return item ? item.quantity : 0;
-  };
-
   // Animate Add to Cart button
   const animateCartButton = (productId) => {
     setAnimatingCartButtons(prev => ({ ...prev, [productId]: true }));
@@ -240,33 +234,19 @@ const Home = () => {
 
   const handleAddToCart = (product) => {
     animateCartButton(product.id);
-    
-    setCartItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === product.id);
-      if (existingItem) {
-        showNotification(`Added another ${product.name} to your cart`);
-        return prevItems.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-        );
-      }
-      
-      showNotification(`${product.name} added to your cart`);
-      return [...prevItems, { ...product, quantity: 1 }];
-    });
+    addToCartContext(product);
+    showNotification(`${product.name} added to your cart`);
   };
 
   const handleUpdateQuantity = (id, quantity) => {
-    if (quantity <= 0) {
-      handleRemoveFromCart(id);
-      return;
-    }
+    updateCartQuantity(id, quantity);
     
-    setCartItems((prevItems) => {
-      const updatedItems = prevItems.map((item) => (item.id === id ? { ...item, quantity } : item));
-      const updatedItem = updatedItems.find(item => item.id === id);
-      showNotification(`Updated ${updatedItem.name} quantity to ${quantity}`);
-      return updatedItems;
-    });
+    if (quantity > 0) {
+      const updatedItem = cartItems.find(item => item.id === id);
+      if (updatedItem) {
+        showNotification(`Updated ${updatedItem.name} quantity to ${quantity}`);
+      }
+    }
   };
 
   const handleRemoveFromCart = (id) => {
@@ -275,7 +255,7 @@ const Home = () => {
       showNotification(`Removed ${itemToRemove.name} from your cart`);
     }
     
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
+    removeFromCart(id);
   };
 
   const handleCheckout = () => {
@@ -320,12 +300,7 @@ const Home = () => {
         setIsSuccessModalOpen(true);
         
         // Clear cart after successful order
-        setCartItems([]);
-        try {
-          localStorage.removeItem('cartItems'); // Clear the cart in localStorage too
-        } catch (error) {
-          console.error('Error clearing cart from localStorage:', error);
-        }
+        removeFromCart(cartItems.map(item => item.id));
         setIsCartOpen(false);
         showNotification('Order placed successfully!');
         
@@ -377,6 +352,7 @@ const Home = () => {
         cartItemsCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
         onCartClick={() => setIsCartOpen(true)}
         onSearch={handleSearch}
+        likedProductsCount={likedProducts.length}
       />
       
       {/* Toast Notification */}
@@ -552,6 +528,7 @@ const Home = () => {
                     const cartQuantity = getProductCartQuantity(product.id);
                     const isInCart = cartQuantity > 0;
                     const isAnimating = animatingCartButtons[product.id];
+                    const productIsLiked = isProductLiked(product.id);
                     
                     return (
                       <div key={product.id} className="group">
@@ -621,23 +598,18 @@ const Home = () => {
                             <div className="mt-3 flex justify-between items-center">
                               <span className="text-base font-bold text-blue-600">${product.price ? product.price.toFixed(2) : '0.00'}</span>
                               <div className="flex space-x-2">
-                                {isInCart ? (
-                                  <span className="text-xs font-medium px-2 py-1 text-blue-600">
-                                    In Cart: {cartQuantity}
-                                  </span>
-                                ) : (
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleAddToCart(product);
-                                    }}
-                                    className={`text-gray-500 hover:text-blue-600 transition-colors ${isAnimating ? 'scale-125 text-blue-600' : ''}`}
-                                  >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                    </svg>
-                                  </button>
-                                )}
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleLikedProduct(product);
+                                  }}
+                                  className={`transition-all duration-300 ${productIsLiked ? 'text-rose-500 scale-110' : 'text-gray-400 hover:text-rose-500'}`}
+                                  aria-label={productIsLiked ? "Remove from favorites" : "Add to favorites"}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill={productIsLiked ? "currentColor" : "none"} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                  </svg>
+                                </button>
                               </div>
                             </div>
                           </div>
