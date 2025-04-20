@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useLikedProducts } from '../contexts/LikedProductsContext';
+import OptimizedImage from './OptimizedImage';
 
 const ProductPreview = ({ product, isOpen, onClose, onAddToCart, getCartQuantity, onUpdateQuantity }) => {
   const [isAnimating, setIsAnimating] = useState(false);
@@ -153,14 +154,12 @@ const ProductPreview = ({ product, isOpen, onClose, onAddToCart, getCartQuantity
               <div className="grid w-full grid-cols-1 items-start gap-x-6 gap-y-8 sm:grid-cols-12 lg:gap-x-8">
                 <div className="aspect-2/3 w-full sm:col-span-4 lg:col-span-5">
                   {product.image ? (
-                    <img
-                      alt={product.name}
+                    <OptimizedImage
                       src={product.image}
-                      className="h-full w-full rounded-lg bg-gray-100 object-cover"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = 'https://via.placeholder.com/400x600?text=No+Image';
-                      }}
+                      alt={product.name}
+                      className="rounded-lg"
+                      objectFit="cover"
+                      height="100%"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center rounded-lg bg-gray-100">
@@ -265,14 +264,12 @@ const ProductPreview = ({ product, isOpen, onClose, onAddToCart, getCartQuantity
                           <div className={`bg-white rounded-lg shadow-sm border ${isMissing ? 'border-dashed border-gray-300' : 'border-gray-200'} overflow-hidden`}>
                             <div className="h-24 bg-gray-100 relative">
                               {relatedProduct.image ? (
-                                <img 
+                                <OptimizedImage 
                                   src={relatedProduct.image} 
                                   alt={relatedProduct.name}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    e.target.onerror = null;
-                                    e.target.src = 'https://via.placeholder.com/100x100?text=No+Image';
-                                  }}
+                                  className="w-full h-full"
+                                  objectFit="cover"
+                                  placeholderColor="bg-gray-50"
                                 />
                               ) : (
                                 <div className="flex items-center justify-center h-full w-full bg-gray-100">
@@ -291,7 +288,7 @@ const ProductPreview = ({ product, isOpen, onClose, onAddToCart, getCartQuantity
                               )}
                               
                               {isRelatedInCart && !isMissing && (
-                                <div className="absolute top-1 right-1 bg-blue-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                <div className="absolute top-1 right-1 bg-blue-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center z-10">
                                   {relatedCartQuantity}
                                 </div>
                               )}

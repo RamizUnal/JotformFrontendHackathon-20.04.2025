@@ -5,6 +5,7 @@ import Cart from '../components/Cart';
 import { useLikedProducts } from '../contexts/LikedProductsContext';
 import { useCart } from '../contexts/CartContext';
 import ProductPreview from '../components/ProductPreview';
+import OptimizedImage from '../components/OptimizedImage';
 
 // Quantity Control Component
 const QuantityControl = ({ quantity, onIncrease, onDecrease }) => {
@@ -188,17 +189,15 @@ const LikedProducts = () => {
                         onClick={() => handleProductClick(product)}
                       >
                         {product.image ? (
-                          <img 
+                          <OptimizedImage 
                             src={product.image} 
-                            alt={product.name} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
-                            }}
+                            alt={product.name}
+                            className="w-full h-full"
+                            objectFit="cover"
+                            placeholderColor="bg-gray-100"
                           />
                         ) : (
-                          <div className="flex items-center justify-center h-full bg-gray-100 text-gray-400">
+                          <div className="flex items-center justify-center h-full w-full bg-gray-100 text-gray-400">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
@@ -207,7 +206,7 @@ const LikedProducts = () => {
                         
                         {/* Cart badge if in cart */}
                         {isInCart && (
-                          <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                          <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center z-10">
                             {cartQuantity}
                           </div>
                         )}

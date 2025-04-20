@@ -7,6 +7,7 @@ import OrderSuccessModal from '../components/OrderSuccessModal.jsx';
 import { getStoreProducts, CURRENT_STORE_ID, searchProducts, submitOrder } from '../api/jotformApi.js';
 import { useLikedProducts } from '../contexts/LikedProductsContext';
 import { useCart } from '../contexts/CartContext';
+import OptimizedImage from '../components/OptimizedImage.jsx';
 
 // Toast notification component
 const Toast = ({ message, isVisible, onClose }) => {
@@ -602,14 +603,12 @@ const Home = () => {
                         >
                           <div className="h-40 bg-gray-100 relative overflow-hidden">
                             {product.image ? (
-                              <img 
+                              <OptimizedImage 
                                 src={product.image} 
                                 alt={product.name} 
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                                onError={(e) => {
-                                  e.target.onerror = null;
-                                  e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
-                                }}
+                                className="w-full h-full"
+                                objectFit="cover"
+                                placeholderColor="bg-gray-100"
                               />
                             ) : (
                               <div className="flex items-center justify-center h-full bg-gray-100 text-gray-400">
@@ -621,12 +620,12 @@ const Home = () => {
                             
                             {/* Cart badge if in cart */}
                             {isInCart && (
-                              <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                              <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center z-10">
                                 {cartQuantity}
                               </div>
                             )}
                             
-                            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
                               {isInCart ? (
                                 <div 
                                   onClick={(e) => e.stopPropagation()}

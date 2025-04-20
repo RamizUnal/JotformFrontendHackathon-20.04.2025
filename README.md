@@ -28,6 +28,8 @@ In product information, any product also lists other products that are related. 
 IMPORTANT: DUE TO HOW THE PRODUCTS ARE CODED, ANY RELATED PRODUCT TO ONE PRODUCT WILL HAVE THE SAME NAME, BUT DIFFERENT ID'S
 THIS IS HOW IT'S IMPLEMENTED, NOT AN ERROR. TECHNICALLY THESE ARE DIFFERENT PRODUCTS WITH DIFFERENT ID'S
 
+Submission works, shows the correct sum and sends the correct time
+
 ## Getting Started
 To start, go to the project folder and simply type "npm run dev" in the terminal
 You can change the store type by gping to jotformApi.js and changing 
